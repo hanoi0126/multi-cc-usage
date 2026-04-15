@@ -1,5 +1,7 @@
 # multi-cc-usage
 
+![Dashboard screenshot](assets/dashboard.png)
+
 Multi-account Claude Code usage dashboard. Aggregates `ccusage` output across
 several `CLAUDE_CONFIG_DIR`s (e.g. personal / lab / work) and serves a small
 React dashboard at `http://localhost:5173`.
