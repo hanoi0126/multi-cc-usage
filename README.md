@@ -43,6 +43,24 @@ cd web && npm run dev
 
 Then open http://localhost:5173.
 
+### Tip: one-shot `cc-dash` command
+
+Drop a function into `~/.zshrc` (or `~/.bashrc`) so a single `cc-dash` starts
+both processes and opens the browser:
+
+```sh
+cc-dash() {
+  local root="$HOME/path/to/multi-cc-usage"   # ← edit this
+  ( cd "$root"     && python3 app.py ) &
+  ( cd "$root/web" && npm run dev   ) &
+  sleep 1 && open http://localhost:5173
+  wait
+}
+```
+
+Now `cc-dash` in any terminal brings the dashboard up; `Ctrl-C` tears both
+servers down together.
+
 ## Account config shape
 
 Each entry in `accounts.json`:
@@ -56,3 +74,15 @@ Each entry in `accounts.json`:
 | `alias`          | `"p-claude"`             | shell alias, display only                           |
 | `config_dir`     | `"~/.claude-personal"`   | `CLAUDE_CONFIG_DIR` passed to `ccusage`             |
 | `token_limit_5h` | `30000000`               | estimated 5h-window budget for % gauge              |
+
+## Credits
+
+This project is a thin visualization layer on top of
+[**ccusage**](https://github.com/ryoppippi/ccusage) by
+[@ryoppippi](https://github.com/ryoppippi) — all usage numbers come from
+shelling out to the `ccusage` CLI. ccusage is distributed under the MIT
+license; huge thanks to the author.
+
+## License
+
+MIT
