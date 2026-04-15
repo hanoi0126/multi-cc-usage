@@ -1,0 +1,29 @@
+[
+  {
+    "id":             "personal",
+    "name":           "Personal",
+    "email":          "you@example.com",
+    "plan":           "Max",
+    "alias":          "p-claude",
+    "config_dir":     "~/.claude-personal",
+    "token_limit_5h": 30000000
+  },
+  {
+    "id":             "lab",
+    "name":           "Lab",
+    "email":          "you@lab.example.com",
+    "plan":           "Team",
+    "alias":          "l-claude",
+    "config_dir":     "~/.claude-lab",
+    "token_limit_5h": 19000000
+  },
+  {
+    "id":             "work",
+    "name":           "Work",
+    "email":          "you@work.example.com",
+    "plan":           "Team",
+    "alias":          "w-claude",
+    "config_dir":     "~/.claude-work",
+    "token_limit_5h": 19000000
+  }
+]

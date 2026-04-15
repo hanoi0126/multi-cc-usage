@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Node
+node_modules/
+dist/
+.vite/
+*.log
+
+# Local config / secrets
+.env
+.env.local
+accounts.json
+
+# Claude Code local settings (machine-specific paths)
+.claude/settings.local.json
