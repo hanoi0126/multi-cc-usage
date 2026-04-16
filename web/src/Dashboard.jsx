@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import {
   BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
+  ReferenceLine,
 } from "recharts";
 
 /* ━━ Palette ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
@@ -326,6 +327,58 @@ export default function Dashboard() {
 
   const maxMonth = (year === now.getFullYear()) ? now.getMonth() : 11;
 
+  const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+  const todayDay = isCurrentMonth ? now.getDate() : null;
+  const todayLabel = todayDay ? String(todayDay) : null;
+
+  const xTicks = useMemo(() => {
+    if (!data.length) return [];
+    const stride = Math.max(1, Math.floor(data.length / 16));
+    const set = new Set();
+    data.forEach((d, i) => { if (i % stride === 0) set.add(d.label); });
+    set.add(data[data.length - 1].label);
+    if (todayLabel) set.add(todayLabel);
+    return Array.from(set);
+  }, [data, todayLabel]);
+
+  const DayTick = ({ x, y, payload }) => {
+    const isToday = payload.value === todayLabel;
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text
+          x={0}
+          y={0}
+          dy={12}
+          textAnchor="middle"
+          fill={isToday ? P.acc : P.text3}
+          fontSize={10}
+          fontWeight={isToday ? 700 : 400}
+          fontFamily="'Azeret Mono', monospace"
+        >
+          {payload.value}
+        </text>
+      </g>
+    );
+  };
+
+  const todayRefLine = todayLabel ? (
+    <ReferenceLine
+      x={todayLabel}
+      stroke={P.acc}
+      strokeDasharray="4 4"
+      strokeOpacity={0.55}
+      ifOverflow="extendDomain"
+      label={{
+        value: "Today",
+        position: "top",
+        fill: P.acc,
+        fontSize: 10,
+        fontFamily: "'Azeret Mono', monospace",
+        fontWeight: 700,
+      }}
+    />
+  ) : null;
+
   return (
     <div style={{
       minHeight: "100vh", background: P.bg, color: P.text,
@@ -422,31 +475,40 @@ export default function Dashboard() {
           <div style={{ padding: "20px 24px 16px" }}>
             <ResponsiveContainer width="100%" height={280}>
               {mode === "stacked" ? (
-                <BarChart data={data} margin={{ top: 4, right: 0, left: -12, bottom: 0 }} barCategoryGap="16%">
+                <BarChart data={data} margin={{ top: 20, right: 0, left: -12, bottom: 0 }} barCategoryGap="16%">
                   <CartesianGrid stroke={P.border} strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: P.text3, fontFamily: "'Azeret Mono', monospace" }} axisLine={{ stroke: P.border }} tickLine={false} interval={Math.max(0, Math.floor(data.length / 16))} />
+                  <XAxis dataKey="label" tick={<DayTick />} ticks={xTicks} axisLine={{ stroke: P.border }} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: P.text3, fontFamily: "'Azeret Mono', monospace" }} axisLine={false} tickLine={false} tickFormatter={(v) => metric === "tokens" ? `${v}M` : `$${v}`} />
                   <Tooltip content={<ChartTooltip metric={metric} accounts={accounts} />} cursor={{ fill: "rgba(255,255,255,0.02)" }} />
-                  {accounts.map((a, i) => (
-                    <Bar
-                      key={a.id}
-                      dataKey={`${a.id}${sfx}`}
-                      stackId="s"
-                      fillOpacity={0.9}
-                      radius={i === accounts.length - 1 ? [2, 2, 0, 0] : 0}
-                    >
-                      {data.map((e, j) => (
-                        <Cell
-                          key={j}
-                          fill={e.future ? P.border : colorFor(a, i)}
-                          fillOpacity={e.future ? 0.2 : 0.85 - i * 0.05}
-                        />
-                      ))}
-                    </Bar>
-                  ))}
+                  {todayRefLine}
+                  {accounts.map((a, i) => {
+                    const isTop = i === accounts.length - 1;
+                    return (
+                      <Bar
+                        key={a.id}
+                        dataKey={`${a.id}${sfx}`}
+                        stackId="s"
+                        fillOpacity={0.9}
+                        radius={isTop ? [2, 2, 0, 0] : 0}
+                      >
+                        {data.map((e, j) => {
+                          const markToday = isTop && e.day === todayDay;
+                          return (
+                            <Cell
+                              key={j}
+                              fill={e.future ? P.border : colorFor(a, i)}
+                              fillOpacity={e.future ? 0.2 : 0.85 - i * 0.05}
+                              stroke={markToday ? P.acc : undefined}
+                              strokeWidth={markToday ? 1.25 : 0}
+                            />
+                          );
+                        })}
+                      </Bar>
+                    );
+                  })}
                 </BarChart>
               ) : (
-                <AreaChart data={cumData} margin={{ top: 4, right: 0, left: -12, bottom: 0 }}>
+                <AreaChart data={cumData} margin={{ top: 20, right: 0, left: -12, bottom: 0 }}>
                   <defs>
                     {accounts.map((a, i) => {
                       const c = colorFor(a, i);
@@ -459,9 +521,10 @@ export default function Dashboard() {
                     })}
                   </defs>
                   <CartesianGrid stroke={P.border} strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 10, fill: P.text3, fontFamily: "'Azeret Mono', monospace" }} axisLine={{ stroke: P.border }} tickLine={false} interval={Math.max(0, Math.floor(cumData.length / 16))} />
+                  <XAxis dataKey="label" tick={<DayTick />} ticks={xTicks} axisLine={{ stroke: P.border }} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: P.text3, fontFamily: "'Azeret Mono', monospace" }} axisLine={false} tickLine={false} tickFormatter={(v) => metric === "tokens" ? `${v}M` : `$${v}`} />
                   <Tooltip content={<ChartTooltip metric={metric} isCumulative accounts={accounts} />} cursor={{ stroke: P.text3, strokeDasharray: "3 3" }} />
+                  {todayRefLine}
                   {accounts.map((a, i) => {
                     const c = colorFor(a, i);
                     return (
